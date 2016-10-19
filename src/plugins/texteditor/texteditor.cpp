@@ -2594,6 +2594,7 @@ void TextEditorWidget::gotoLine(int line, int column, bool centerLine)
     qDebug() << "prevScroll: " << prevScrollValue << " targetScroll: " <<  newScrollValue;
 
         QPropertyAnimation* animation = new  QPropertyAnimation(verticalScrollBar(), "value");
+        animation->setEasingCurve(QEasingCurve::InOutExpo);
         animation->setDuration(500);
         animation->setEndValue(newScrollValue);
 
