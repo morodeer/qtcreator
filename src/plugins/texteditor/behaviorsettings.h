@@ -57,6 +57,7 @@ public:
     bool m_scrollWheelZooming;
     bool m_constrainHoverTooltips;
     bool m_camelCaseNavigation;
+    bool m_smoothScroll;
     bool m_keyboardTooltips;
     bool m_smartSelectionChanging;
 };

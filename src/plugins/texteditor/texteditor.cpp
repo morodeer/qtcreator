@@ -2556,6 +2556,9 @@ void TextEditorWidget::gotoLine(int line, int column, bool centerLine)
     d->m_lastCursorChangeWasInteresting = false; // avoid adding the previous position to history
     const int blockNumber = qMin(line, document()->blockCount()) - 1;
     const QTextBlock &block = document()->findBlockByNumber(blockNumber);
+
+    QTextCursor prevCursor = textCursor();
+    qDebug() << prevCursor.blockNumber();
     if (block.isValid()) {
         QTextCursor cursor(block);
         if (column > 0) {
@@ -2929,6 +2932,16 @@ void TextEditorWidget::setCamelCaseNavigationEnabled(bool b)
 bool TextEditorWidget::camelCaseNavigationEnabled() const
 {
     return d->m_behaviorSettings.m_camelCaseNavigation;
+}
+
+void TextEditorWidget::setSmoothScrollEnabled(bool b)
+{
+    d->m_behaviorSettings.m_smoothScroll = b;
+}
+
+bool TextEditorWidget::smoothScrollEnabled() const
+{
+    return d->m_behaviorSettings.m_smoothScroll;
 }
 
 void TextEditorWidget::setRevisionsVisible(bool b)

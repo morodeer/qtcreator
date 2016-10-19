@@ -247,6 +247,9 @@ public:
     void setVisibleWrapColumn(int column);
     int visibleWrapColumn() const;
 
+    void setSmoothScrollEnabled(bool b);
+    bool smoothScrollEnabled() const;
+
     int columnCount() const;
     int rowCount() const;
 
