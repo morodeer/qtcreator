@@ -112,6 +112,7 @@
 #include <QTimeLine>
 #include <QTimer>
 #include <QToolBar>
+#include <QPropertyAnimation>
 
 //#define DO_FOO
 
@@ -337,6 +338,8 @@ public:
 
     void reconfigure();
 
+    void mutePaintEvent();
+
 public:
     TextEditorWidget *q;
     QToolBar *m_toolBar;
@@ -479,6 +482,8 @@ public:
     QTimer m_scrollBarUpdateTimer;
     HighlightScrollBar *m_highlightScrollBar;
     bool m_scrollBarUpdateScheduled;
+
+    bool m_paintEventAccepted;
 };
 
 TextEditorWidgetPrivate::TextEditorWidgetPrivate(TextEditorWidget *parent)
@@ -535,7 +540,9 @@ TextEditorWidgetPrivate::TextEditorWidgetPrivate(TextEditorWidget *parent)
     m_searchWatcher(0),
     m_scrollBarUpdateTimer(0),
     m_highlightScrollBar(0),
-    m_scrollBarUpdateScheduled(false)
+    m_scrollBarUpdateScheduled(false),
+    m_paintEventAccepted(true)
+
 {
     Aggregation::Aggregate *aggregate = new Aggregation::Aggregate;
     BaseTextFind *baseTextFind = new BaseTextFind(q);
@@ -2557,8 +2564,9 @@ void TextEditorWidget::gotoLine(int line, int column, bool centerLine)
     const int blockNumber = qMin(line, document()->blockCount()) - 1;
     const QTextBlock &block = document()->findBlockByNumber(blockNumber);
 
-    QTextCursor prevCursor = textCursor();
-    qDebug() << prevCursor.blockNumber();
+    int prevScrollValue = verticalScrollBar()->value();
+
+    verticalScrollBar()->blockSignals(true);
     if (block.isValid()) {
         QTextCursor cursor(block);
         if (column > 0) {
@@ -2571,13 +2579,36 @@ void TextEditorWidget::gotoLine(int line, int column, bool centerLine)
             cursor.setPosition(pos);
         }
         setTextCursor(cursor);
-
-        if (centerLine)
-            centerCursor();
-        else
-            ensureCursorVisible();
     }
-    d->saveCurrentCursorPositionForNavigation();
+    if (centerLine)
+        centerCursor();
+    else
+        ensureCursorVisible();
+    int newScrollValue = verticalScrollBar()->value();
+
+    // getting to start position
+    verticalScrollBar()->setValue(prevScrollValue);
+    verticalScrollBar()->blockSignals(false);
+
+//    qDebug() << "prevLineNumber: " << prevLineNumber << " targetLineNumber: " << line;
+    qDebug() << "prevScroll: " << prevScrollValue << " targetScroll: " <<  newScrollValue;
+
+        QPropertyAnimation* animation = new  QPropertyAnimation(verticalScrollBar(), "value");
+        animation->setDuration(500);
+        animation->setEndValue(newScrollValue);
+
+        connect(animation, &QPropertyAnimation::finished, [this, column, &block]() {
+
+//            verticalScrollBar()->setValue(newScrollValue);
+//            if (centerLine)
+//                centerCursor();
+//            else
+//                ensureCursorVisible();
+            d->saveCurrentCursorPositionForNavigation();
+
+        });
+
+        animation->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
 int TextEditorWidget::position(TextPositionOperation posOp, int at) const
@@ -2860,6 +2891,12 @@ void TextEditorWidgetPrivate::reconfigure()
     Utils::MimeDatabase mdb;
     m_document->setMimeType(mdb.mimeTypeForFile(m_document->filePath().toString()).name());
     q->configureGenericHighlighter();
+}
+
+void TextEditorWidgetPrivate::mutePaintEvent()
+{
+    m_paintEventAccepted = false;
+
 }
 
 bool TextEditorWidget::codeFoldingVisible() const
@@ -6481,6 +6518,7 @@ void TextEditorWidget::encourageApply()
         return;
     d->m_snippetOverlay->updateEquivalentSelections(textCursor());
 }
+
 
 void TextEditorWidget::showEvent(QShowEvent* e)
 {
