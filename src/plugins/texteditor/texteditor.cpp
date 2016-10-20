@@ -2566,9 +2566,9 @@ void TextEditorWidget::gotoLine(int line, int column, bool centerLine)
 
     int prevScrollValue = verticalScrollBar()->value();
 
-    verticalScrollBar()->blockSignals(true);
+//    verticalScrollBar()->blockSignals(true);
+    QTextCursor cursor(block);
     if (block.isValid()) {
-        QTextCursor cursor(block);
         if (column > 0) {
             cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, column);
         } else {
@@ -2578,33 +2578,55 @@ void TextEditorWidget::gotoLine(int line, int column, bool centerLine)
             }
             cursor.setPosition(pos);
         }
-        setTextCursor(cursor);
+//        setTextCursor(cursor);
     }
-    if (centerLine)
-        centerCursor();
-    else
-        ensureCursorVisible();
-    int newScrollValue = verticalScrollBar()->value();
 
-    // getting to start position
-    verticalScrollBar()->setValue(prevScrollValue);
-    verticalScrollBar()->blockSignals(false);
+    qDebug() << "We should jump to line number " << blockNumber;
+    int pos = cursor.position();
 
-//    qDebug() << "prevLineNumber: " << prevLineNumber << " targetLineNumber: " << line;
-    qDebug() << "prevScroll: " << prevScrollValue << " targetScroll: " <<  newScrollValue;
+    QTextBlock jumpBlock = document()->findBlock(pos);
+    QTextLine tline = block.layout()->lineForTextPosition(pos - block.position());
+    Q_ASSERT(tline.isValid());
+//        setTopBlock(block.blockNumber(), line.lineNumber());
+
+    QTextDocument *doc = document();
+//    QTextBlock block = jumpBlock;
+
+    int lineNumber = tline.lineNumber();
+    int newTopLine = jumpBlock.firstLineNumber() + lineNumber;
+    int maxTopLine = verticalScrollBar()->maximum();
+//    if (newTopLine > maxTopLine) {
+//        jumpBlock = doc->findBlockByLineNumber(maxTopLine);
+//        blockNumber = jumpBlock.blockNumber();
+//        lineNumber = maxTopLine - jumpBlock.firstLineNumber();
+//    }
+
+//    qDebug() << "lineNumber " << newTopLine;
+
+
+
+////    if (centerLine)
+//        centerCursor();
+////    else
+////        ensureCursorVisible();
 
         QPropertyAnimation* animation = new  QPropertyAnimation(verticalScrollBar(), "value");
-        animation->setEasingCurve(QEasingCurve::InOutExpo);
-        animation->setDuration(500);
-        animation->setEndValue(newScrollValue);
+        animation->setEasingCurve(QEasingCurve::InOutQuad);
+        qreal deltaScroll = fabs(newTopLine - prevScrollValue);
+        qreal duration = 100 + ( 0.9 - exp( -deltaScroll / 100. ) ) * 1000 ;
+        qDebug() << prevScrollValue << " + " << deltaScroll << " = " << newTopLine;
+        qDebug() << "duration will be " << duration;
+        animation->setDuration(duration);
+        animation->setEndValue(newTopLine);
 
-        connect(animation, &QPropertyAnimation::finished, [this, column, &block]() {
+        connect(animation, &QPropertyAnimation::finished, [this, column, &block, cursor]() {
 
 //            verticalScrollBar()->setValue(newScrollValue);
 //            if (centerLine)
 //                centerCursor();
 //            else
 //                ensureCursorVisible();
+            setTextCursor(cursor);
             d->saveCurrentCursorPositionForNavigation();
 
         });
