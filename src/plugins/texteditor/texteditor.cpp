@@ -2584,12 +2584,16 @@ void TextEditorWidget::gotoLine(int line, int column, bool centerLine)
 
     qDebug() << "We should jump to line number " << blockNumber;
     if (blockNumber < 0) {
+            setTextCursor(cursor);
+        d->saveCurrentCursorPositionForNavigation();
         return;
     }
     int pos = cursor.position();
 
     QTextBlock jumpBlock = document()->findBlock(pos);
     if (!jumpBlock.isValid())
+            setTextCursor(cursor);
+        d->saveCurrentCursorPositionForNavigation();
         return;
     QTextLine tline = jumpBlock.layout()->lineForTextPosition(pos - jumpBlock.position());
     Q_ASSERT(tline.isValid());
