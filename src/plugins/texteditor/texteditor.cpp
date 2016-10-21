@@ -2580,35 +2580,28 @@ void TextEditorWidget::gotoLine(int line, int column, bool centerLine)
         }
 //        setTextCursor(cursor);
     }
+//        ensureCursorVisible();
 
     qDebug() << "We should jump to line number " << blockNumber;
+    if (blockNumber < 0) {
+        return;
+    }
     int pos = cursor.position();
 
     QTextBlock jumpBlock = document()->findBlock(pos);
-    QTextLine tline = block.layout()->lineForTextPosition(pos - block.position());
+    if (!jumpBlock.isValid())
+        return;
+    QTextLine tline = jumpBlock.layout()->lineForTextPosition(pos - jumpBlock.position());
     Q_ASSERT(tline.isValid());
-//        setTopBlock(block.blockNumber(), line.lineNumber());
 
     QTextDocument *doc = document();
-//    QTextBlock block = jumpBlock;
 
     int lineNumber = tline.lineNumber();
     int newTopLine = jumpBlock.firstLineNumber() + lineNumber;
     int maxTopLine = verticalScrollBar()->maximum();
-//    if (newTopLine > maxTopLine) {
-//        jumpBlock = doc->findBlockByLineNumber(maxTopLine);
-//        blockNumber = jumpBlock.blockNumber();
-//        lineNumber = maxTopLine - jumpBlock.firstLineNumber();
-//    }
-
-//    qDebug() << "lineNumber " << newTopLine;
 
 
 
-////    if (centerLine)
-//        centerCursor();
-////    else
-////        ensureCursorVisible();
 
         QPropertyAnimation* animation = new  QPropertyAnimation(verticalScrollBar(), "value");
         animation->setEasingCurve(QEasingCurve::InOutQuad);
@@ -2632,6 +2625,10 @@ void TextEditorWidget::gotoLine(int line, int column, bool centerLine)
         });
 
         animation->start(QAbstractAnimation::DeleteWhenStopped);
+////    if (centerLine)
+////        centerCursor();
+////    else
+////        ensureCursorVisible();
 }
 
 int TextEditorWidget::position(TextPositionOperation posOp, int at) const
