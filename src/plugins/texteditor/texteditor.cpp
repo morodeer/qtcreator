@@ -29,6 +29,7 @@
 #include "marginsettings.h"
 #include "fontsettings.h"
 #include "texteditoractionhandler.h"
+#include <QtMath>
 
 #include "autocompleter.h"
 #include "basehoverhandler.h"
@@ -2611,8 +2612,8 @@ void TextEditorWidget::gotoLine(int line, int column, bool centerLine)
 
         QPropertyAnimation* animation = new  QPropertyAnimation(verticalScrollBar(), "value");
         animation->setEasingCurve(QEasingCurve::InOutQuad);
-        qreal deltaScroll = fabs(newTopLine - prevScrollValue);
-        qreal duration = 100 + ( 0.9 - exp( -deltaScroll / 100. ) ) * 1000 ;
+        qreal deltaScroll = qAbs(newTopLine - prevScrollValue);
+        qreal duration = 100 + ( 0.9 - qExp( -deltaScroll / 100. ) ) * 1000 ;
         qDebug() << prevScrollValue << " + " << deltaScroll << " = " << newTopLine;
         qDebug() << "duration will be " << duration;
         animation->setDuration(duration);
