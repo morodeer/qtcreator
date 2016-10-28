@@ -2592,9 +2592,11 @@ void TextEditorWidget::gotoLine(int line, int column, bool centerLine)
 
     QTextBlock jumpBlock = document()->findBlock(pos);
     if (!jumpBlock.isValid())
+    {
             setTextCursor(cursor);
         d->saveCurrentCursorPositionForNavigation();
         return;
+    }
     QTextLine tline = jumpBlock.layout()->lineForTextPosition(pos - jumpBlock.position());
     Q_ASSERT(tline.isValid());
 
